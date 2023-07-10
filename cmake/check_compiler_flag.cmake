@@ -32,14 +32,33 @@ MACRO (MY_CHECK_CXX_COMPILER_FLAG flag)
   SET(CMAKE_REQUIRED_FLAGS "${SAVE_CMAKE_REQUIRED_FLAGS}")
 ENDMACRO()
 
+# here is a custom macro for fuzzer implementation
+
+MACRO (MY_CHECK_CXX_COMPILER_FLAG_FUZZER flag)
+  STRING(REGEX REPLACE "[-,= +]" "_" result "have_CXX_${flag}")
+  SET(SAVE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+  SET(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
+  CHECK_CXX_SOURCE_COMPILES("
+    #include <iostream>
+    extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
+      return 0;
+    }
+  " ${result} ${fail_patterns})
+  SET(CMAKE_REQUIRED_FLAGS "${SAVE_CMAKE_REQUIRED_FLAGS}")
+ENDMACRO()
+
 FUNCTION(MY_CHECK_AND_SET_COMPILER_FLAG flag)
   # At the moment this is gcc-only.
   # Let's avoid expensive compiler tests on Windows:
   IF(WIN32)
     RETURN()
   ENDIF()
-  MY_CHECK_C_COMPILER_FLAG(${flag})
-  MY_CHECK_CXX_COMPILER_FLAG(${flag})
+  IF(flag STREQUAL "-fsanitize=fuzzer")
+    MY_CHECK_CXX_COMPILER_FLAG_FUZZER(${flag})
+  ELSE()
+    MY_CHECK_C_COMPILER_FLAG(${flag})
+    MY_CHECK_CXX_COMPILER_FLAG(${flag})
+  ENDIF()
   STRING(REGEX REPLACE "[-,= +]" "_" result "${flag}")
   FOREACH(lang C CXX)
     IF (have_${lang}_${result})
