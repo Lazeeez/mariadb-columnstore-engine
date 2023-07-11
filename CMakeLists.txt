@@ -257,7 +257,7 @@ ENDIF()
 
 IF (WITH_COLUMNSTORE_FUZZER)
     Message("dripcheck")
-    MY_CHECK_AND_SET_COMPILER_FLAG("-fsanitize=fuzzer")
+    MY_CHECK_AND_SET_COMPILER_FLAG("-fsanitize=fuzzer-no-link")
 ENDIF()
 
 MY_CHECK_AND_SET_COMPILER_FLAG("-Wno-deprecated-copy" DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
